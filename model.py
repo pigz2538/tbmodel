@@ -432,7 +432,9 @@ class GraphNN(nn.Module):
 
 class WHOLEMODEL(nn.Module):
 
-    def __init__(self,  
+    def __init__(self,
+                  embedding_dim,
+                  graph_dim,
                   gnn_dim_list,
                   gnn_head_list,
                   orb_dim_list,
@@ -451,9 +453,11 @@ class WHOLEMODEL(nn.Module):
         super(WHOLEMODEL, self).__init__()
         
         self.atomic_init_dim = gnn_dim_list[0]
+        self.embedding_dim = embedding_dim
+        self.graph_dim = embedding_dim
         self.atom_num = atom_num
 
-        self.init_dim = gnn_dim_list[0]
+        self.atomic_feat = nn.Embedding(120, self.embedding_dim) 
 
         self.gnn = GraphNN(gnn_dim_list, gnn_head_list)
         self.orbnn = OrbitalNN(orb_dim_list, orbital_activation)
@@ -466,9 +470,11 @@ class WHOLEMODEL(nn.Module):
         
     def forward(self, bg, para_sk, is_hopping, hopping_index, orb_key, d, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index):
 
-        feat = bg.ndata['feature'][:, :self.init_dim]
+        featstable = bg.ndata['feature'][:, :self.graph_dim]
+        featembedding = self.atomic_feat(bg.ndata["species"]).reshape([-1,self.embedding_dim])
+        featall = torch.cat((featstable, featembedding), dim=1)
 
-        feat = self.gnn(bg, feat) 
+        feat = self.gnn(bg, featall) 
         # o = self.onn(feat[:cell_atom_num])
         feato = self.orbnn(feat)
        

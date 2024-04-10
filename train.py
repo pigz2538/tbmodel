@@ -80,6 +80,8 @@ def train(dist_path):
     testset_dgldata_path = os.path.join(test_data_path, 'dgl')
 
     # configure network structure
+    embedding_dim          = config_para['embedding_dim']
+    graph_dim              = config_para['graph_dim']
     gnn_dim_list           = config_para['gnn_dim_list']
     gnn_head_list          = config_para['gnn_head_list']
     onsite_dim_list        = config_para['onsite_dim_list']
@@ -90,6 +92,8 @@ def train(dist_path):
     expander_bessel_cutoff = config_para['expander_bessel_cutoff']
     atom_num               = config_para['atom_num']
     is_orb                 = config_para['is_orb']
+
+    gnn_dim_list[0] = embedding_dim + graph_dim
 
     utils.seed_torch(seed = 24)
 
@@ -118,6 +122,8 @@ def train(dist_path):
     test_dataloader = GraphDataLoader(testset, batch_size = batch_size, drop_last = False, shuffle = False)
 
     model = WHOLEMODEL(
+                        embedding_dim = embedding_dim,
+                        graph_dim = graph_dim,
                         gnn_dim_list = gnn_dim_list,
                         gnn_head_list = gnn_head_list,
                         orb_dim_list = orb_dim_list,
