@@ -139,7 +139,7 @@ def train(dist_path):
     model = model.to(device)
 
     opt = torch.optim.Adam(model.parameters(), lr_radio_init, eps=lr_eps)
-    sch = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='min', factor=lr_factor, patience=lr_patience, verbose=lr_verbose, threshold=lr_threshold, threshold_mode='rel', cooldown=cooldown, min_lr=min_lr, eps=lr_eps)
+    sch = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='min', factor=lr_factor, patience=lr_patience*int(train_num / batch_size), verbose=lr_verbose, threshold=lr_threshold, threshold_mode='rel', cooldown=cooldown*int(train_num / batch_size), min_lr=min_lr, eps=lr_eps)
 
     criterion = nn.SmoothL1Loss()
     loss_per_epoch = np.zeros(train_num)  
@@ -184,6 +184,7 @@ def train(dist_path):
 
     for epoch in range(start_epoch + 1, num_epoch + 1):
         for graphs, labels in train_dataloader:
+            loss = 0
             i = int(labels[0] / batch_size)
 
             hsk, feat, feato = model(graphs, para_sk[i], is_hopping[i], hopping_index[i], orb_key[i], d[i], onsite_key[i], cell_atom_num[i], onsite_num[i].sum(), orb1_index[i], orb2_index[i])
@@ -193,12 +194,18 @@ def train(dist_path):
             b3 = int(orb_num[i].shape[0] / len(labels))
             b4 = int(cell_atom_num[i] / len(labels))
 
-            loss = 0
+            
             for j in range(len(labels)):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
                 
+
+            if is_sch:
+                sch.step(loss)
+
+            loss_per_epoch[i] = loss.item()
+
             if is_L1:
                 L1 = 0
                 for name,param in model.named_parameters():
@@ -212,13 +219,10 @@ def train(dist_path):
                     if 'bias' not in name:
                         L2 += torch.norm(param, p=2) * L2_radio
                 loss += L2
-            
+                
             opt.zero_grad()
             loss.backward()
             opt.step()
-
-        if is_sch:
-            sch.step(loss)
 
         #test part
         with torch.no_grad():
@@ -233,8 +237,6 @@ def train(dist_path):
                 reproduced_bands = utils.compute_bands(HR, traininfos[i]['tensor_eikr'])
 
                 test_loss += criterion(reproduced_bands[:, 4:12], traininfos[i]['tensor_E'][:, 4:12]).item()
-
-        loss_per_epoch[i] = loss.item()
 
         losses[epoch - 1] = loss_per_epoch.sum() / train_num
         test_losses[epoch - 1] = test_loss / test_num 

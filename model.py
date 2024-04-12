@@ -454,7 +454,7 @@ class WHOLEMODEL(nn.Module):
         
         self.atomic_init_dim = gnn_dim_list[0]
         self.embedding_dim = embedding_dim
-        self.graph_dim = embedding_dim
+        self.graph_dim = graph_dim
         self.atom_num = atom_num
 
         self.atomic_feat = nn.Embedding(120, self.embedding_dim) 
