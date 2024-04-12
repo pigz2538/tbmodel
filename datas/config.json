@@ -2,7 +2,7 @@
     "train_num": 72,
     "train_reload": true,
     "test_num": 5,
-    "test_reload": false,
+    "test_reload": true,
     "batch_size": 4,
     "num_epoch": 50000,
     "lr_radio_init": 1e-2,
