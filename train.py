@@ -47,6 +47,10 @@ def train(dist_path):
         config_para = json.load(f)
 
     # configure hyper parameters
+    train_num      = config_para['train_num']
+    test_num       = config_para['test_num']
+    train_reload   = config_para['train_reload']
+    test_reload    = config_para['test_reload']
     batch_size     = config_para['batch_size']
     num_epoch      = config_para['num_epoch']
     lr_radio_init  = config_para['lr_radio_init']
@@ -99,27 +103,35 @@ def train(dist_path):
 
     trainset, traininfos = utils.get_data(
                                             raw_dir = trainset_rawdata_path, 
-                                            save_dir = trainset_dgldata_path, 
-                                            force_reload = True,
+                                            save_dir = trainset_dgldata_path,
+                                            data_num = train_num, 
+                                            force_reload = train_reload,
                                             )
 
     traingraphs, trainlabels, init_dim = trainset.get_all()
-    train_num = len(traingraphs)
-    traingraphs = batch(traingraphs)
-    traingraphs = traingraphs.to(device)
+    # traingraphs = batch(traingraphs)
+    # traingraphs = traingraphs.to(device)
     train_dataloader = GraphDataLoader(trainset, batch_size = batch_size, drop_last = False, shuffle = False)
+
+    with open(os.path.join(dist_path, 'train_infos.txt'), 'w+') as file:
+        for i in traininfos.values():
+            file.write(i['filename'][:-3] + '\n')
 
     testset, testinfos = utils.get_data(
                                         raw_dir = testset_rawdata_path, 
                                         save_dir = testset_dgldata_path, 
-                                        force_reload = True,
+                                        data_num = test_num,
+                                        force_reload = test_reload,
                                         )
 
     testgraphs, testlabels, init_dim = testset.get_all()
-    test_num = len(testgraphs)
-    testgraphs = batch(testgraphs)
-    testgraphs = testgraphs.to(device)
+    # testgraphs = batch(testgraphs)
+    # testgraphs = testgraphs.to(device)
     test_dataloader = GraphDataLoader(testset, batch_size = batch_size, drop_last = False, shuffle = False)
+
+    with open(os.path.join(dist_path, 'test_infos.txt'), 'w+') as file:
+        for i in testinfos.values():
+            file.write(i['filename'][:-3] + '\n')
 
     model = WHOLEMODEL(
                         embedding_dim = embedding_dim,
@@ -141,8 +153,10 @@ def train(dist_path):
     opt = torch.optim.Adam(model.parameters(), lr_radio_init, eps=lr_eps)
     sch = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='min', factor=lr_factor, patience=lr_patience*int(train_num / batch_size), verbose=lr_verbose, threshold=lr_threshold, threshold_mode='rel', cooldown=cooldown*int(train_num / batch_size), min_lr=min_lr, eps=lr_eps)
 
+    print(lr_patience*int(train_num / batch_size))
+
     criterion = nn.SmoothL1Loss()
-    loss_per_epoch = np.zeros(train_num)  
+    loss_per_epoch = np.zeros(int(train_num / batch_size))  
     losses = np.zeros(num_epoch)
     test_losses = np.zeros(num_epoch)
 
@@ -180,7 +194,7 @@ def train(dist_path):
         test_losses = np.zeros(num_epoch)
         print('Can not load saved model!Training from beginning!')
 
-    para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key = utils.batch_index(train_dataloader, traininfos, batch_size)
+    para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key, filename = utils.batch_index(train_dataloader, traininfos, batch_size)
 
     for epoch in range(start_epoch + 1, num_epoch + 1):
         for graphs, labels in train_dataloader:
@@ -194,12 +208,10 @@ def train(dist_path):
             b3 = int(orb_num[i].shape[0] / len(labels))
             b4 = int(cell_atom_num[i] / len(labels))
 
-            
             for j in range(len(labels)):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
-                
 
             if is_sch:
                 sch.step(loss)
@@ -237,8 +249,8 @@ def train(dist_path):
                 reproduced_bands = utils.compute_bands(HR, traininfos[i]['tensor_eikr'])
 
                 test_loss += criterion(reproduced_bands[:, 4:12], traininfos[i]['tensor_E'][:, 4:12]).item()
-
-        losses[epoch - 1] = loss_per_epoch.sum() / train_num
+        
+        losses[epoch - 1] = loss_per_epoch.sum() / int(train_num / batch_size)
         test_losses[epoch - 1] = test_loss / test_num 
         current_lr = opt.param_groups[0]['lr']
 

@@ -6,11 +6,13 @@ from dgl.data import DGLDataset
 from dgl.data.utils import save_graphs, save_info, load_graphs, load_info
 import readcif as rd
 import utils
+import random
 
 device = 'cuda:0'
 
-def read_data(path):
+def read_data(path, data_num):
     subdirs = os.listdir(path)
+    subdirs = random.choices(subdirs, k=data_num)
     graphs = []
     labels = []
     infos = {}
@@ -98,21 +100,25 @@ class GGCNNDATASET(DGLDataset):
     def __init__(self, 
                  raw_dir, 
                  save_dir,
+                 data_num,
                  force_reload = False, 
                  verbose = False):
-        super(GGCNNDATASET, self).__init__(name="gnr",
+        
+        self.init_dim = None
+        self.data_num = data_num
+
+        super(GGCNNDATASET, self).__init__(name="2dlayer",
                                            raw_dir=raw_dir,
                                            save_dir=save_dir,
                                            force_reload=force_reload,
                                            verbose=verbose)
-        self.init_dim = None
     
     def download(self):
         pass 
     
     def process(self):
         path = self.raw_dir
-        self.graphs, self.labels, self.infos, self.init_dim = read_data(path) 
+        self.graphs, self.labels, self.infos, self.init_dim = read_data(path, self.data_num) 
         
     def save(self):
         graph_path = os.path.join(self.save_dir, 'graphs.bin')
@@ -128,7 +134,7 @@ class GGCNNDATASET(DGLDataset):
     def load(self):
         graphs, label_dict = load_graphs(os.path.join(self.save_dir, 'graphs.bin'))
         infos = load_info(os.path.join(self.save_dir, 'infos.bin'))
-        self.graphs = graphs 
+        self.graphs = graphs.to(device)
         self.labels = label_dict['labels']
         self.infos = infos 
     

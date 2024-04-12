@@ -2,4 +2,11 @@
 
 results
 dgl
-__pychache__
+__pycache__
+datas/test_data/dgl/graphs.bin
+datas/test_data/dgl/infos.bin
+datas/train_data/dgl/graphs.bin
+datas/train_data/dgl/infos.bin
+__pycache__/batch.cpython-310.pyc
+__pycache__/model.cpython-310.pyc
+__pycache__/utils.cpython-310.pyc

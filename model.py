@@ -59,7 +59,7 @@ class BesselBasisLayer(nn.Module): # bessel扩展
 
 class MLP(nn.Module):
 
-    def __init__(self, dim_list, activation, dropout=True):
+    def __init__(self, dim_list, activation, dropout=False):
         super(MLP, self).__init__()
         
         self.num_layers = len(dim_list) - 1
@@ -471,8 +471,11 @@ class WHOLEMODEL(nn.Module):
     def forward(self, bg, para_sk, is_hopping, hopping_index, orb_key, d, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index):
 
         featstable = bg.ndata['feature'][:, :self.graph_dim]
-        featembedding = self.atomic_feat(bg.ndata["species"]).reshape([-1,self.embedding_dim])
-        featall = torch.cat((featstable, featembedding), dim=1)
+        if self.embedding_dim > 0:
+            featembedding = self.atomic_feat(bg.ndata["species"]).reshape([-1,self.embedding_dim])
+            featall = torch.cat((featstable, featembedding), dim=1)
+        else:
+            featall = featstable
 
         feat = self.gnn(bg, featall) 
         # o = self.onn(feat[:cell_atom_num])

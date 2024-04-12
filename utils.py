@@ -64,8 +64,8 @@ def compute_bands(HR, eikr):
 
     return w
 
-def get_data(raw_dir, save_dir, force_reload=False):
-    data = GGCNNDATASET(raw_dir, save_dir, force_reload)
+def get_data(raw_dir, save_dir, data_num, force_reload=False):
+    data = GGCNNDATASET(raw_dir, save_dir, data_num, force_reload)
     infos = data.infos
     return data, infos 
  
@@ -181,11 +181,11 @@ def get_coefficient(rvectors, hopping_info, hopping_orbital, max_orbital_num, at
     return torch.tensor(para_sk)
 
 def batch_index(train_dataloader, infos, batch_size):
-    para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key = [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []
+    para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key, filename = [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []
 
     for graphs, labels in train_dataloader:
         label = labels.numpy()
-        sum_atom, hopping_index_batch, hopping_info_batch, para_sk_batch, is_hopping_batch, d_batch, cell_atom_num_batch, onsite_num_batch, orb1_index_batch, orb2_index_batch, orb_num_batch, rvectors_batch, rvectors_all_batch, tensor_E_batch, tensor_eikr_batch = [], [], [], [], [], [], [], [], [], [], [], [], [], [], []
+        sum_atom, hopping_index_batch, hopping_info_batch, para_sk_batch, is_hopping_batch, d_batch, cell_atom_num_batch, onsite_num_batch, orb1_index_batch, orb2_index_batch, orb_num_batch, rvectors_batch, rvectors_all_batch, tensor_E_batch, tensor_eikr_batch, filename_batch = [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []
 
         orb_key_batch = np.zeros(14)
 
@@ -224,6 +224,7 @@ def batch_index(train_dataloader, infos, batch_size):
             rvectors_all_batch.append(infos[i]['rvectors_all'])
             tensor_eikr_batch.append(infos[i]['tensor_eikr'])
             tensor_E_batch.append(infos[i]['tensor_E'])
+            filename_batch.append(infos[i]['filename'])
 
             orb_key_batch += infos[i]['orb_key']
         
@@ -247,7 +248,8 @@ def batch_index(train_dataloader, infos, batch_size):
         orb1_index.append([obm1, obm2, obm3, obm4])
         orb2_index.append([obn1, obn2, obn3, obn4])
 
-
         orb_key.append(np.sign(orb_key_batch))
 
-    return para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key
+        filename.append(filename_batch)
+
+    return para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key, filename
