@@ -127,7 +127,7 @@ def train(dist_path):
     testgraphs, testlabels, init_dim = testset.get_all()
     # testgraphs = batch(testgraphs)
     # testgraphs = testgraphs.to(device)
-    test_dataloader = GraphDataLoader(testset, batch_size = batch_size, drop_last = False, shuffle = False)
+    test_dataloader = GraphDataLoader(testset, batch_size = 1, drop_last = False, shuffle = False)
 
     with open(os.path.join(dist_path, 'test_infos.txt'), 'w+') as file:
         for i in testinfos.values():

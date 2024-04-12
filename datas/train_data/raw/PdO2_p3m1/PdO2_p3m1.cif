@@ -1,0 +1,28 @@
+data_image0
+_chemical_formula_structural       PdO2
+_chemical_formula_sum              "Pd1 O2"
+_cell_length_a       3.093824248831124
+_cell_length_b       3.093824248831124
+_cell_length_c       16.95804023766434
+_cell_angle_alpha    90.0
+_cell_angle_beta     90.0
+_cell_angle_gamma    120.00000000000001
+
+_space_group_name_H-M_alt    "P 1"
+_space_group_IT_number       1
+
+loop_
+  _space_group_symop_operation_xyz
+  'x, y, z'
+
+loop_
+  _atom_site_type_symbol
+  _atom_site_label
+  _atom_site_symmetry_multiplicity
+  _atom_site_fract_x
+  _atom_site_fract_y
+  _atom_site_fract_z
+  _atom_site_occupancy
+  Pd  Pd1       1.0  0.0  0.0  0.5000000000688659  1.0000
+  O   O1        1.0  0.6666666649699745  0.33333333279438504  0.5577319140329315  1.0000
+  O   O2        1.0  0.33333333279438504  0.6666666655887701  0.44226808610480034  1.0000

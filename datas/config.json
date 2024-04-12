@@ -1,7 +1,7 @@
 {
-    "train_num": 32,
+    "train_num": 72,
     "train_reload": true,
-    "test_num": 1,
+    "test_num": 5,
     "test_reload": false,
     "batch_size": 4,
     "num_epoch": 50000,
