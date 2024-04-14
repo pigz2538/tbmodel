@@ -62,6 +62,7 @@ def train(dist_path):
     min_lr         = config_para['min_lr']
     cooldown       = config_para['cooldown']
     is_sch         = config_para['is_sch']
+    is_save        = config_para['is_save']
     save_frequncy  = config_para['save_frequncy']
 
     is_L1          = config_para['is_L1']
@@ -100,7 +101,7 @@ def train(dist_path):
     gnn_dim_list[0] = embedding_dim + graph_dim
 
     utils.seed_torch(seed = 24)
-
+    
     trainset, traininfos = utils.get_data(
                                             raw_dir = trainset_rawdata_path, 
                                             save_dir = trainset_dgldata_path,
@@ -242,21 +243,23 @@ def train(dist_path):
             for graphs, labels in test_dataloader:
                 i = int(labels[0])
 
-                hsk, feat, feato = model(graphs, traininfos[i]['para_sk'], traininfos[i]['is_hopping'], traininfos[i]['hopping_index'], traininfos[i]['orb_key'], traininfos[i]['d'], traininfos[i]['onsite_key'], traininfos[i]['cell_atom_num'], traininfos[i]['onsite_num'].sum(), traininfos[i]['orb1_index'], traininfos[i]['orb2_index'])
+                hsk, feat, feato = model(graphs, testinfos[i]['para_sk'], testinfos[i]['is_hopping'], testinfos[i]['hopping_index'], testinfos[i]['orb_key'], testinfos[i]['d'], testinfos[i]['onsite_key'], testinfos[i]['cell_atom_num'], testinfos[i]['onsite_num'].sum(), testinfos[i]['orb1_index'], testinfos[i]['orb2_index'])
 
-                HR = utils.construct_hr(hsk, traininfos[i]['hopping_info'], traininfos[i]['orb_num'], traininfos[i]['cell_atom_num'], traininfos[i]['rvectors'])
+                HR = utils.construct_hr(hsk, testinfos[i]['hopping_info'], testinfos[i]['orb_num'], testinfos[i]['cell_atom_num'], testinfos[i]['rvectors'])
 
-                reproduced_bands = utils.compute_bands(HR, traininfos[i]['tensor_eikr'])
+                reproduced_bands = utils.compute_bands(HR, testinfos[i]['tensor_eikr'])
 
-                test_loss += criterion(reproduced_bands[:, 4:12], traininfos[i]['tensor_E'][:, 4:12]).item()
+                test_loss += criterion(reproduced_bands[:, 4:12], testinfos[i]['tensor_E'][:, 4:12]).item()
         
-        losses[epoch - 1] = loss_per_epoch.sum() / int(train_num / batch_size)
+        # print(loss_per_epoch)
+        # print(test_loss)
+        losses[epoch - 1] = loss_per_epoch.sum() / train_num
         test_losses[epoch - 1] = test_loss / test_num 
         current_lr = opt.param_groups[0]['lr']
 
-        print("Epoch {:05d} | Train_Loss {:.6f} | Test_Loss {:.6f} | Learning_rate {:.6f}" . format(epoch, losses[epoch - 1], test_loss, current_lr))
+        print("Epoch {:05d} | Train_Loss {:.6f} | Test_Loss {:.6f} | Learning_rate {:.6f}" . format(epoch, losses[epoch - 1], test_loss / test_num , current_lr))
 
-        if epoch % save_frequncy == 0:
+        if epoch % save_frequncy == 0 and is_save:
 
             check_point = {
                     'epoch': epoch,

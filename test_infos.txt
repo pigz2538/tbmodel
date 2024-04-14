@@ -1,5 +1,4 @@
-ReTe2_p
-TiS2_p6m2
-ReTe2_p
 MoO2_p
-ReTe2_p
+ReSe2_p6m2
+TiS2_p6m2
+WTe2_p6m2

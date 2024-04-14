@@ -11,20 +11,23 @@ import random
 device = 'cuda:0'
 
 def read_data(path, data_num):
-    subdirs = os.listdir(path)
-    subdirs = random.choices(subdirs, k=data_num)
+    dirlist = os.listdir(path)
+    subdirs = []
+    for subdir in dirlist:
+        if not os.path.isdir(os.path.join(path,subdir)):
+            continue
+        else:
+            subdirs.append(subdir)
+
+    subdirs = random.sample(subdirs, k=data_num)
     graphs = []
     labels = []
     infos = {}
     label_count = 0
-
     max_orbital_num = 14
     max_orbkey_num = 11
 
-    for subdir in subdirs:
-        if not os.path.isdir(os.path.join(path,subdir)):
-            continue
-        
+    for subdir in subdirs:       
         pwd = os.path.join(path, subdir)
 
         with open(os.path.join(pwd, subdir + '.json'), 'r') as f:
@@ -90,7 +93,7 @@ def read_data(path, data_num):
         infos[label]['rvectors_all'] = torch.tensor(rvectors_all).to(device)
         infos[label]['tensor_E'] = torch.tensor(tensor_E).to(device)
         infos[label]['tensor_eikr'] = torch.tensor(tensor_eikr).to(device)
-
+    
     return graphs, torch.tensor(labels), infos, init_dim
 
 class GGCNNDATASET(DGLDataset):
