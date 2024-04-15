@@ -70,6 +70,8 @@ def train(dist_path):
     L1_radio       = config_para['L1_radio']
     L2_radio       = config_para['L2_radio']
 
+    averge_loss_radio = config_para['averge_loss_radio']
+
     reset_all        = config_para['reset_all']
     reset_model      = config_para['reset_model']
     reset_model_path = config_para['model_path']
@@ -116,7 +118,7 @@ def train(dist_path):
 
     with open(os.path.join(dist_path, 'train_infos.txt'), 'w+') as file:
         for i in traininfos.values():
-            file.write(i['filename'][:-3] + '\n')
+            file.write(i['filename'] + '\n')
 
     testset, testinfos = utils.get_data(
                                         raw_dir = testset_rawdata_path, 
@@ -132,7 +134,7 @@ def train(dist_path):
 
     with open(os.path.join(dist_path, 'test_infos.txt'), 'w+') as file:
         for i in testinfos.values():
-            file.write(i['filename'][:-3] + '\n')
+            file.write(i['filename'] + '\n')
 
     model = WHOLEMODEL(
                         embedding_dim = embedding_dim,
@@ -198,6 +200,7 @@ def train(dist_path):
     para_sk, hopping_index, hopping_info, d, is_hopping, onsite_key, cell_atom_num, onsite_num, orb1_index, orb2_index, orb_num, rvectors, rvectors_all, tensor_E, tensor_eikr, orb_key, filename = utils.batch_index(train_dataloader, traininfos, batch_size)
 
     for epoch in range(start_epoch + 1, num_epoch + 1):
+        
         for graphs, labels in train_dataloader:
             loss = 0
             i = int(labels[0] / batch_size)
@@ -213,6 +216,7 @@ def train(dist_path):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
+                loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(reproduced_bands[:, 4:12], dim=0)) * averge_loss_radio
 
             if is_sch:
                 sch.step(loss)

@@ -27,7 +27,7 @@ def read_data(path, data_num):
     max_orbital_num = 14
     max_orbkey_num = 11
 
-    for subdir in subdirs:       
+    for subdir in subdirs:
         pwd = os.path.join(path, subdir)
 
         with open(os.path.join(pwd, subdir + '.json'), 'r') as f:
@@ -73,7 +73,7 @@ def read_data(path, data_num):
         onsite_num = np.array(tmp)
 
         infos[label] = {}
-        infos[label]['filename'] = setjson['filename']
+        infos[label]['filename'] = setjson['filename'].replace('.py','')
         infos[label]['cell_atom_num'] = setjson['cell_atom_num']
         infos[label]['atom_num'] = atom_num
         infos[label]['d'] = torch.tensor(d).to(device)
