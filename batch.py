@@ -34,7 +34,8 @@ def read_data(path, data_num):
             setjson = json.load(f)
 
         cif_file = os.path.join(pwd, subdir + '.cif')
-        bands = np.load(os.path.join(pwd, 'bands.npy'))
+        fermi_level = setjson['fermi_level']
+        bands = np.load(os.path.join(pwd, 'bands.npy')) + fermi_level
         kpoints = np.load(os.path.join(pwd, 'k_points.npy'))
 
         label = label_count
@@ -73,10 +74,12 @@ def read_data(path, data_num):
         onsite_num = np.array(tmp)
 
         infos[label] = {}
+
         infos[label]['filename'] = setjson['filename'].replace('.py','')
         infos[label]['cell_atom_num'] = setjson['cell_atom_num']
         infos[label]['atom_num'] = atom_num
         infos[label]['d'] = torch.tensor(d).to(device)
+        infos[label]['fermi_level'] = fermi_level
         infos[label]['hopping_index'] = torch.tensor(hopping_indexs).to(device)
         infos[label]['hopping_info'] = torch.tensor(hopping_info).to(device)
         infos[label]['hopping_orbital'] = hopping_orbital
@@ -93,7 +96,7 @@ def read_data(path, data_num):
         infos[label]['rvectors_all'] = torch.tensor(rvectors_all).to(device)
         infos[label]['tensor_E'] = torch.tensor(tensor_E).to(device)
         infos[label]['tensor_eikr'] = torch.tensor(tensor_eikr).to(device)
-    
+
     return graphs, torch.tensor(labels), infos, init_dim
 
 class GGCNNDATASET(DGLDataset):

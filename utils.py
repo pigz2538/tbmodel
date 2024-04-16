@@ -45,7 +45,7 @@ def construct_hr(hsk, hopping_info, orb_num, cell_atom_num, rvectors):
         
     HR = torch.cat(hr).to(device)
     HR = HR.reshape(rvectors.shape[0], -1, HR.shape[1])
-    HR[4] =(HR[4].transpose(1,0) + HR[4] )/2
+    HR[4] =(HR[4].transpose(1,0) + HR[4])/2
 
     HR5 = HR[3].clone().transpose(1,0).unsqueeze(0)
     HR6 = HR[2].clone().transpose(1,0).unsqueeze(0)
@@ -197,16 +197,18 @@ def batch_index(train_dataloader, infos, batch_size):
         for i in label:
             sum_atom.append(infos[i]['atom_num'])
             cell_atom_num_batch.append(infos[i]['cell_atom_num']) 
-            hopping_index_batch.append(infos[i]['hopping_index'] + sum(sum_atom[1:i]))
+            hopping_index_batch.append(infos[i]['hopping_index'] + sum(sum_atom[0:]) - infos[i]['atom_num'])
             hopping_info_batch.append(infos[i]['hopping_info'])
             para_sk_batch.append(infos[i]['para_sk'])
             is_hopping_batch.append(infos[i]['is_hopping'])
             d_batch.append(infos[i]['d'])
-            ok1.append(infos[i]['onsite_key'][0] + sum(cell_atom_num_batch[1:i]))
-            ok2.append(infos[i]['onsite_key'][1])
-            ok3.append(infos[i]['onsite_key'][2])
-           
             onsite_num_batch.append(infos[i]['onsite_num'])
+            ok1.append(infos[i]['onsite_key'][0] + sum(sum_atom[0:]) - infos[i]['atom_num'])
+            ok2.append(infos[i]['onsite_key'][1])
+            ok3.append(infos[i]['onsite_key'][2] + sum(sum(onsite_num_batch[0:]) - infos[i]['onsite_num']))
+
+            # print(i, ok1[i%4], ok2[i%4], ok3[i%4])
+           
 
             obm1 += infos[i]['orb1_index'][0]
             obm2 += infos[i]['orb1_index'][1]

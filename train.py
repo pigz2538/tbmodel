@@ -159,6 +159,7 @@ def train(dist_path):
     print(lr_patience*int(train_num / batch_size))
 
     criterion = nn.SmoothL1Loss()
+    MSEctiterion = nn.MSELoss()
     loss_per_epoch = np.zeros(int(train_num / batch_size))  
     losses = np.zeros(num_epoch)
     test_losses = np.zeros(num_epoch)
@@ -216,12 +217,8 @@ def train(dist_path):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
-                loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(reproduced_bands[:, 4:12], dim=0)) * averge_loss_radio
-
-            if is_sch:
-                sch.step(loss)
-
-            loss_per_epoch[i] = loss.item()
+                # loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(tensor_E[i][j][:, 4:12], dim=0)) * averge_loss_radio
+                # loss += MSEctiterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
 
             if is_L1:
                 L1 = 0
@@ -236,6 +233,11 @@ def train(dist_path):
                     if 'bias' not in name:
                         L2 += torch.norm(param, p=2) * L2_radio
                 loss += L2
+
+            if is_sch:
+                sch.step(loss)
+            
+            loss_per_epoch[i] = loss.item()
                 
             opt.zero_grad()
             loss.backward()

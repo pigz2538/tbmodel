@@ -481,7 +481,7 @@ class WHOLEMODEL(nn.Module):
         # o = self.onn(feat[:cell_atom_num])
         feato = self.orbnn(feat)
        
-        o = self.onn(feat[:cell_atom_num], onsite_key, onsite_num)
+        o = self.onn(feat, onsite_key, onsite_num)
         # h = self.hnn(feat, hopping_index, d, self.expander(d), orb_key)
         h = self.hnn(feato, hopping_index, self.atom_num, orb_key, d, self.expander(d), orb1_index, orb2_index)
 
