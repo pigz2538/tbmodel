@@ -295,25 +295,24 @@ class HoppingNN(nn.Module): # 从轨道特征生成Slater Koster参量
         self.mlp_list = [MLP(hopping_dim_list2, activation) for i in range(14)]
 
     def forward(self, feats, hopping_index, atom_num, orb_key, d, ex_d, orb1_index, orb2_index):
-
         if self.is_orb[0]:
             sfeat = torch.zeros((atom_num, self.hopping_dim_list1[-1])).to(device)
-            sfeat[orb1_index[0]] = self.smlp(feats[orb2_index[0]]) *100
+            sfeat[orb1_index[0]] = self.smlp(feats[orb2_index[0]])
 
         if self.is_orb[1]:
             pfeat = torch.zeros((atom_num, self.hopping_dim_list1[-1])).to(device)
             for oin1, oin2 in zip(orb1_index[1], orb2_index[1]):
                 
-                pfeat[oin1] = self.pmlp(feats[oin2].flatten())*100
+                pfeat[oin1] = self.pmlp(feats[oin2].flatten())
 
         if self.is_orb[2]:
             dfeat = torch.zeros((atom_num, self.hopping_dim_list1[-1])).to(device)
             for oin1, oin2 in zip(orb1_index[2], orb2_index[2]):
-                dfeat[oin1] = self.dmlp(feats[oin2].flatten()) *100
+                dfeat[oin1] = self.dmlp(feats[oin2].flatten()) 
 
         if self.is_orb[3]:
             Sfeat = torch.zeros((atom_num, self.hopping_dim_list1[-1])).to(device)
-            Sfeat[orb1_index[3]] = self.Smlp(feats[orb2_index[3]]) *100
+            Sfeat[orb1_index[3]] = self.Smlp(feats[orb2_index[3]])
 
         # 合并成s S p d 轨道特征
         atom1, atom2 = hopping_index[:,0], hopping_index[:,1]

@@ -156,7 +156,7 @@ def get_orb_index(crystal, calorb, cell_atom_num):
 
         if atom[9]:
             orb1_indexS.append(i)
-            orb2_indexs.append(i + i * 9 + 9)
+            orb2_indexS.append(i + i * 9 + 9)
 
     orb1_index = [orb1_indexs,orb1_indexp,orb1_indexd,orb1_indexS]
     orb2_index = [orb2_indexs,orb2_indexp,orb2_indexd,orb2_indexS]

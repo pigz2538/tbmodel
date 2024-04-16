@@ -217,8 +217,8 @@ def train(dist_path):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
-                # loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(tensor_E[i][j][:, 4:12], dim=0)) * averge_loss_radio
-                # loss += MSEctiterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
+                loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(tensor_E[i][j][:, 4:12], dim=0)) * averge_loss_radio
+                loss += MSEctiterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
 
             if is_L1:
                 L1 = 0

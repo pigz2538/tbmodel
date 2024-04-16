@@ -196,29 +196,27 @@ def batch_index(train_dataloader, infos, batch_size):
 
         for i in label:
             sum_atom.append(infos[i]['atom_num'])
-            cell_atom_num_batch.append(infos[i]['cell_atom_num']) 
-            hopping_index_batch.append(infos[i]['hopping_index'] + sum(sum_atom[0:]) - infos[i]['atom_num'])
+            cell_atom_num_batch.append(infos[i]['cell_atom_num'])
+            add_num = sum(sum_atom[0:]) - infos[i]['atom_num']
+            hopping_index_batch.append(infos[i]['hopping_index'] + add_num)
             hopping_info_batch.append(infos[i]['hopping_info'])
             para_sk_batch.append(infos[i]['para_sk'])
             is_hopping_batch.append(infos[i]['is_hopping'])
             d_batch.append(infos[i]['d'])
             onsite_num_batch.append(infos[i]['onsite_num'])
-            ok1.append(infos[i]['onsite_key'][0] + sum(sum_atom[0:]) - infos[i]['atom_num'])
+            ok1.append(infos[i]['onsite_key'][0] + add_num)
             ok2.append(infos[i]['onsite_key'][1])
             ok3.append(infos[i]['onsite_key'][2] + sum(sum(onsite_num_batch[0:]) - infos[i]['onsite_num']))
 
-            # print(i, ok1[i%4], ok2[i%4], ok3[i%4])
-           
+            obm1 += list((np.array(infos[i]['orb1_index'][0]) + add_num))
+            obm2 += list((np.array(infos[i]['orb1_index'][1]) + add_num))
+            obm3 += list((np.array(infos[i]['orb1_index'][2]) + add_num))
+            obm4 += list((np.array(infos[i]['orb1_index'][3]) + add_num))
 
-            obm1 += infos[i]['orb1_index'][0]
-            obm2 += infos[i]['orb1_index'][1]
-            obm3 += infos[i]['orb1_index'][2]
-            obm4 += infos[i]['orb1_index'][3]
-
-            obn1 += infos[i]['orb2_index'][0]
-            obn2 += infos[i]['orb2_index'][1]
-            obn3 += infos[i]['orb2_index'][2]
-            obn4 += infos[i]['orb2_index'][3]
+            obn1 += list((np.array(infos[i]['orb2_index'][0]) + add_num * 10))
+            obn2 += list((np.array(infos[i]['orb2_index'][1]) + add_num * 10))
+            obn3 += list((np.array(infos[i]['orb2_index'][2]) + add_num * 10))
+            obn4 += list((np.array(infos[i]['orb2_index'][3]) + add_num * 10))
 
             orb_num_batch.append(infos[i]['orb_num'])
 
@@ -229,7 +227,7 @@ def batch_index(train_dataloader, infos, batch_size):
             filename_batch.append(infos[i]['filename'])
 
             orb_key_batch += infos[i]['orb_key']
-        
+
         hopping_index.append(torch.cat(hopping_index_batch))
         hopping_info.append(torch.cat(hopping_info_batch))
         is_hopping.append(torch.cat(is_hopping_batch))
