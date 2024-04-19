@@ -10,3 +10,9 @@ datas/train_data/dgl/infos.bin
 __pycache__/batch.cpython-310.pyc
 __pycache__/model.cpython-310.pyc
 __pycache__/utils.cpython-310.pyc
+batch1in.npy
+batch1out.npy
+batch4in.npy
+batch4out.npy
+test1500.pkl
+test9500.pkl

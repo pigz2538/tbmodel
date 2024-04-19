@@ -213,10 +213,13 @@ def batch_index(train_dataloader, infos, batch_size):
             obm3 += list((np.array(infos[i]['orb1_index'][2]) + add_num))
             obm4 += list((np.array(infos[i]['orb1_index'][3]) + add_num))
 
-            obn1 += list((np.array(infos[i]['orb2_index'][0]) + add_num * 10))
-            obn2 += list((np.array(infos[i]['orb2_index'][1]) + add_num * 10))
-            obn3 += list((np.array(infos[i]['orb2_index'][2]) + add_num * 10))
-            obn4 += list((np.array(infos[i]['orb2_index'][3]) + add_num * 10))
+            # obn1 += list((np.array(infos[i]['orb2_index'][0]) + add_num * 10))
+            # obn2 += list((np.array(infos[i]['orb2_index'][1]) + add_num * 10))
+            # obn3 += list((np.array(infos[i]['orb2_index'][2]) + add_num * 10))
+            # obn4 += list((np.array(infos[i]['orb2_index'][3]) + add_num * 10))
+
+
+            obn1 += list((np.array(infos[i]['orb2_index'][0]) + add_num))
 
             orb_num_batch.append(infos[i]['orb_num'])
 
@@ -228,13 +231,19 @@ def batch_index(train_dataloader, infos, batch_size):
 
             orb_key_batch += infos[i]['orb_key']
 
+        for i, j in zip(label, range(len(label))):
+            sum_cell = sum(sum_atom[0:j]) 
+            obn2 += list((np.array(infos[i]['orb2_index'][1]) + np.array([1,2,3]) * sum(sum_atom) + sum_cell))
+            obn3 += list((np.array(infos[i]['orb2_index'][2]) + np.array([4,5,6,7,8])* sum(sum_atom) + sum_cell))
+            obn4 += list((np.array(infos[i]['orb2_index'][3]) + sum(sum_atom) * 9 + sum_cell))
+
+
         hopping_index.append(torch.cat(hopping_index_batch))
         hopping_info.append(torch.cat(hopping_info_batch))
         is_hopping.append(torch.cat(is_hopping_batch))
         d.append(torch.cat(d_batch))
         para_sk.append(torch.cat(para_sk_batch))
         orb_num.append(torch.cat(orb_num_batch))
-        
         rvectors.append(torch.stack(rvectors_batch, dim=0))
         rvectors_all.append(torch.stack(rvectors_all_batch, dim=0))
 
@@ -245,6 +254,7 @@ def batch_index(train_dataloader, infos, batch_size):
 
         cell_atom_num.append(sum(cell_atom_num_batch))
         onsite_num.append(np.concatenate(onsite_num_batch))
+
         orb1_index.append([obm1, obm2, obm3, obm4])
         orb2_index.append([obn1, obn2, obn3, obn4])
 

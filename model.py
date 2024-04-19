@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as Func
@@ -10,6 +11,7 @@ from dgl import function as fn
 from dgl.base import DGLError
 
 device = 'cuda:0'
+
 
 class Envelope(nn.Module):  # bessel扩展计算式子
 
@@ -53,8 +55,8 @@ class BesselBasisLayer(nn.Module): # bessel扩展
 
         d_scaled = d / self.cutoff
         d_cutoff = self.envelope(d_scaled)
-
-        return d_cutoff * torch.sin(self.frequencies * d_scaled)
+        d_sin = d_cutoff * torch.sin(self.frequencies * d_scaled)
+        return d_sin
     
 
 class MLP(nn.Module):
@@ -81,7 +83,7 @@ class MLP(nn.Module):
         return self.layers[-1](x)
 
 
-class GATv2Conv(nn.Module):
+class GATv2Conv(nn.Module):# (batch问题在这里)
     def __init__(
         self,
         in_feats,
@@ -193,16 +195,17 @@ class GATv2Conv(nn.Module):
                     h_dst = h_dst[: graph.number_of_dst_nodes()]
 
             coeff = self.bessel(graph.edata['distance'].reshape([-1, 1])).unsqueeze(-1)
-
+            
             graph.srcdata.update(
                 {"el": feat_src}
             )  # (num_src_edge, num_heads, out_dim)
             graph.dstdata.update({"er": feat_dst})
             graph.apply_edges(fn.u_add_v("el", "er", "e"))
+
             e = self.prelu(
                 graph.edata.pop("e") * coeff
             )  # (num_src_edge, num_heads, out_dim)
-            
+
             e = (
                 (e * self.attn).sum(dim=-1).unsqueeze(dim=2)
             )  # (num_edge, num_heads, 1)
@@ -242,11 +245,11 @@ class OrbitalNN(nn.Module):  # 扩展为轨道特征
     
     def forward(self, feats):
 
-        temp_feat = torch.tensor([]).to(device)
+        temp_feat = []
         for i in range(10):
-            temp_feat = torch.cat((temp_feat, self.mlp_list[i](feats)), 0)
+            temp_feat.append(self.mlp_list[i](feats))
 
-        return temp_feat
+        return torch.cat(temp_feat, dim=0)
 
 
 class OnsiteNN(nn.Module): # 从轨道特征变成在位能
@@ -255,6 +258,7 @@ class OnsiteNN(nn.Module): # 从轨道特征变成在位能
         super(OnsiteNN, self).__init__()
 
         self.onsite_mlp = [MLP(onsite_dim_list, activation) for i in range(10)]
+
     def forward(self, ofeat, onsite_key, onsite_num):
         '''
         onsite_key 0: 原子序号：代表第几个原子 0 1 2
@@ -294,7 +298,7 @@ class HoppingNN(nn.Module): # 从轨道特征生成Slater Koster参量
 
         self.mlp_list = [MLP(hopping_dim_list2, activation) for i in range(14)]
 
-    def forward(self, feats, hopping_index, atom_num, orb_key, d, ex_d, orb1_index, orb2_index):
+    def forward(self, feat, feats, hopping_index, atom_num, orb_key, d, ex_d, orb1_index, orb2_index):
         if self.is_orb[0]:
             sfeat = torch.zeros((atom_num, self.hopping_dim_list1[-1])).to(device)
             sfeat[orb1_index[0]] = self.smlp(feats[orb2_index[0]])
@@ -318,7 +322,7 @@ class HoppingNN(nn.Module): # 从轨道特征生成Slater Koster参量
         atom1, atom2 = hopping_index[:,0], hopping_index[:,1]
 
         zeros = torch.zeros((atom1.shape[0],1)).to(device)
-
+    
         if orb_key[0]: # Vsss
             vfeat = self.mlp_list[0](torch.cat([sfeat[atom1]/(d**2),sfeat[atom2]/(d**2),ex_d], 1))
         else:
@@ -477,14 +481,15 @@ class WHOLEMODEL(nn.Module):
             featall = featstable
 
         feat = self.gnn(bg, featall) 
-        # o = self.onn(feat[:cell_atom_num])
+
+    # o = self.onn(feat[:cell_atom_num])
         feato = self.orbnn(feat)
-       
+
         o = self.onn(feat, onsite_key, onsite_num)
         # h = self.hnn(feat, hopping_index, d, self.expander(d), orb_key)
-        h = self.hnn(feato, hopping_index, self.atom_num, orb_key, d, self.expander(d), orb1_index, orb2_index)
+        h = self.hnn(feat, feato, hopping_index, self.atom_num, orb_key, d, self.expander(d), orb1_index, orb2_index)
 
         hsk = torch.sum(h*para_sk, dim=1)
         hsk[torch.where(is_hopping==0)[0]] = o
           
-        return hsk, feat, feato
+        return hsk, feat, feato, featall, o, h

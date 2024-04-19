@@ -134,35 +134,63 @@ def get_onsite_key(crystal, calorb, cell_atom_num):
     
     return [temp1, temp3, temp4]
 
-def get_orb_index(crystal, calorb, cell_atom_num):
+def get_orb_index(crystal, calorb, cell_atom_num, atom_num):
     orb1_indexs, orb1_indexp, orb1_indexd, orb1_indexS = [], [], [], []
     orb2_indexs, orb2_indexp, orb2_indexd, orb2_indexS = [], [], [], []
     # orb2_index = [np.zeros(cell_atom_num, 1), np.zeros((cell_atom_num, 3)), np.zeros((cell_atom_num, 5)), np.zeros(cell_atom_num, 1)]
 
-    for i in range(cell_atom_num):
+    for i in range(atom_num):
         atom = calorb[crystal.species[i].name]
 
         if atom[0]:
             orb1_indexs.append(i)
-            orb2_indexs.append(i + i * 9)
+            orb2_indexs.append(i)
         
         if atom[1] or atom[2] or atom[3]:
             orb1_indexp.append(i)
-            orb2_indexp.append(i + np.array([1,2,3]) + i * 9)
+            orb2_indexp.append(i + np.array([0,0,0]))
 
         if atom[4] or atom[5] or atom[6] or atom[7] or atom[8]:
             orb1_indexd.append(i)
-            orb2_indexd.append(i + np.array([4,5,6,7,8]) + i * 9)
+            orb2_indexd.append(i + np.array([0,0,0,0,0]))
 
         if atom[9]:
             orb1_indexS.append(i)
-            orb2_indexS.append(i + i * 9 + 9)
+            orb2_indexS.append(i + i * atom_num * 9)
 
     orb1_index = [orb1_indexs,orb1_indexp,orb1_indexd,orb1_indexS]
     orb2_index = [orb2_indexs,orb2_indexp,orb2_indexd,orb2_indexS]
 
     return orb1_index, orb2_index
 
+# def get_orb_index(crystal, calorb, cell_atom_num, atom_num):
+#     orb1_indexs, orb1_indexp, orb1_indexd, orb1_indexS = [], [], [], []
+#     orb2_indexs, orb2_indexp, orb2_indexd, orb2_indexS = [], [], [], []
+#     # orb2_index = [np.zeros(cell_atom_num, 1), np.zeros((cell_atom_num, 3)), np.zeros((cell_atom_num, 5)), np.zeros(cell_atom_num, 1)]
+
+#     for i in range(atom_num):
+#         atom = calorb[crystal.species[i].name]
+
+#         if atom[0]:
+#             orb1_indexs.append(i)
+#             orb2_indexs.append(i + i * 9)
+        
+#         if atom[1] or atom[2] or atom[3]:
+#             orb1_indexp.append(i)
+#             orb2_indexp.append(i + np.array([1,2,3]) + i * 9)
+
+#         if atom[4] or atom[5] or atom[6] or atom[7] or atom[8]:
+#             orb1_indexd.append(i)
+#             orb2_indexd.append(i + np.array([4,5,6,7,8]) + i * 9)
+
+#         if atom[9]:
+#             orb1_indexS.append(i)
+#             orb2_indexS.append(i + i * 9 + 9)
+
+#     orb1_index = [orb1_indexs,orb1_indexp,orb1_indexd,orb1_indexS]
+#     orb2_index = [orb2_indexs,orb2_indexp,orb2_indexd,orb2_indexS]
+
+#     return orb1_index, orb2_index
 
 def read_cif(cif_file, calorb):
 
@@ -222,7 +250,7 @@ def read_cif(cif_file, calorb):
             for add_num in cc:
                 crystaltrans.append(species = add_num.species, coords=add_num.coords, properties=add_num.properties, coords_are_cartesian=True)
 
-    orb1_index, orb2_index = get_orb_index(crystaltrans, calorb, atom_num)
+    orb1_index, orb2_index = get_orb_index(crystaltrans, calorb, cell_atom_num, atom_num)
 
     atomic_numbers = np.array(crystaltrans.atomic_numbers)
     graph_s, outinfor = crystal_to_dgl(crystaltrans, atomic_numbers, r_neighborhood)

@@ -206,7 +206,7 @@ def train(dist_path):
             loss = 0
             i = int(labels[0] / batch_size)
 
-            hsk, feat, feato = model(graphs, para_sk[i], is_hopping[i], hopping_index[i], orb_key[i], d[i], onsite_key[i], cell_atom_num[i], onsite_num[i].sum(), orb1_index[i], orb2_index[i])
+            hsk, feat, feato, featall, o, h = model(graphs, para_sk[i], is_hopping[i], hopping_index[i], orb_key[i], d[i], onsite_key[i], cell_atom_num[i], onsite_num[i].sum(), orb1_index[i], orb2_index[i])
 
             b1 = int(hsk.shape[0] / len(labels))
             b2 = int(hopping_info[i].shape[0] / len(labels))
@@ -217,8 +217,8 @@ def train(dist_path):
                 HR = utils.construct_hr(hsk[j * b1:(j + 1) * b1], hopping_info[i][j * b2:(j + 1) * b2], orb_num[i][j * b3:(j + 1) * b3], b4, rvectors[i][j])
                 reproduced_bands = utils.compute_bands(HR, tensor_eikr[i][j])
                 loss += criterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
-                loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(tensor_E[i][j][:, 4:12], dim=0)) * averge_loss_radio
-                loss += MSEctiterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
+                # loss += criterion(torch.mean(reproduced_bands[:, 4:12], dim=0), torch.mean(tensor_E[i][j][:, 4:12], dim=0)) * averge_loss_radio
+                # loss += MSEctiterion(reproduced_bands[:, 4:12], tensor_E[i][j][:, 4:12])
 
             if is_L1:
                 L1 = 0
@@ -249,7 +249,7 @@ def train(dist_path):
             for graphs, labels in test_dataloader:
                 i = int(labels[0])
 
-                hsk, feat, feato = model(graphs, testinfos[i]['para_sk'], testinfos[i]['is_hopping'], testinfos[i]['hopping_index'], testinfos[i]['orb_key'], testinfos[i]['d'], testinfos[i]['onsite_key'], testinfos[i]['cell_atom_num'], testinfos[i]['onsite_num'].sum(), testinfos[i]['orb1_index'], testinfos[i]['orb2_index'])
+                hsk, feat, feato, featall, o, h= model(graphs, testinfos[i]['para_sk'], testinfos[i]['is_hopping'], testinfos[i]['hopping_index'], testinfos[i]['orb_key'], testinfos[i]['d'], testinfos[i]['onsite_key'], testinfos[i]['cell_atom_num'], testinfos[i]['onsite_num'].sum(), testinfos[i]['orb1_index'], testinfos[i]['orb2_index'])
 
                 HR = utils.construct_hr(hsk, testinfos[i]['hopping_info'], testinfos[i]['orb_num'], testinfos[i]['cell_atom_num'], testinfos[i]['rvectors'])
 
@@ -272,7 +272,7 @@ def train(dist_path):
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': opt.state_dict(),
                     'scheduler_state_dict': sch.state_dict(),
-                    'loss': loss
+                    'loss': loss_per_epoch.sum() / train_num
                     }
             torch.save(check_point, os.path.join(dist_path, 'results/test{}.pkl'.format(epoch)))
             

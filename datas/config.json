@@ -5,7 +5,7 @@
     "test_reload": true,
     "batch_size": 4,
     "num_epoch": 50000,
-    "lr_radio_init": 1e-4,
+    "lr_radio_init": 1e-3,
     "lr_factor": 0.5,
     "lr_patience": 200,
     "lr_verbose": false,
@@ -33,9 +33,9 @@
     "is_orb": [1,1,1,0],
     "is_save": true,
     "save_frequncy": 100,
-    "reset_all": false, 
-    "reset_model": true,
-    "model_path": "./results/test2500.pkl",
-    "reset_opt": true,
+    "reset_all": true,
+    "reset_model": false,
+    "model_path": "./results/test100.pkl",
+    "reset_opt": false,
     "reset_sch": true
 }
